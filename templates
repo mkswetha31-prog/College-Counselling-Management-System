@@ -1,0 +1,779 @@
+INDEX.HTML
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <title>College Counselling System</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <style>
+    body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        background: linear-gradient(135deg, #e3f2fd, #ffffff);
+        margin: 0;
+        padding: 60px 20px;
+        text-align: center;
+        min-height: 100vh;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    h1 {
+        color: #2c3e50;
+        font-size: 36px;
+        margin-bottom: 40px;
+        background: linear-gradient(to right, #2980b9, #6dd5fa);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+
+    ul {
+        list-style: none;
+        padding: 0;
+        max-width: 600px;
+        width: 100%;
+    }
+
+    li {
+        margin: 18px 0;
+    }
+
+    a.button {
+        display: inline-block;
+        width: 100%;
+        max-width: 400px;
+        padding: 15px 30px;
+        background-color: #3498db;
+        color: white;
+        font-size: 18px;
+        text-decoration: none;
+        border-radius: 10px;
+        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+        transition: all 0.3s ease;
+    }
+
+    a.button:hover {
+        background-color: #2c80b4;
+        transform: scale(1.03);
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.15);
+    }
+
+    @media (max-width: 600px) {
+        h1 {
+            font-size: 28px;
+        }
+
+        a.button {
+            font-size: 16px;
+            padding: 12px 20px;
+        }
+    }
+    </style>
+</head>
+<body>
+    <h1>🎓 College Counselling Management System</h1>
+    <ul>
+        <li><a class="button" href="{{ url_for('admindashboard') }}">Admin Dashboard</a></li>
+        <li><a class="button" href="{{ url_for('register') }}">Register</a></li>
+        <li><a class="button" href="{{ url_for('adminlogin') }}">Admin Login</a></li>
+        <li><a class="button" href="{{ url_for('add_college') }}">Add College</a></li>
+        <li><a class="button" href="{{ url_for('register_student') }}">Counseling Allotment</a></li>
+        <li><a class="button" href="{{ url_for('studentlogin') }}">Student Login</a></li>
+
+        {% if student_id %}
+        <li><a class="button" href="{{ url_for('allotment', student_id=student_id) }}">Alloted Counseling</a></li>
+        {% else %}
+        <li><a class="button" href="#">Alloted Counseling (Login Required)</a></li>
+        {% endif %}
+
+        <li><a class="button" href="{{ url_for('admin_logout') }}">Logout</a></li>
+    </ul>
+</body>
+</html>
+//ADDCOLLEGES.HTML
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Add College</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 30px;
+      background: linear-gradient(to right, #e0f7fa, #f1f8e9);
+    }
+
+    form {
+      background: white;
+      padding: 25px;
+      border-radius: 10px;
+      max-width: 500px;
+      margin: auto;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
+    h2 {
+      text-align: center;
+      color: #2e7d32;
+    }
+
+    label, input {
+      display: block;
+      width: 100%;
+      margin-bottom: 15px;
+    }
+
+    input[type="submit"] {
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      padding: 12px;
+      font-size: 16px;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+
+    input[type="submit"]:hover {
+      background-color: #388e3c;
+    }
+  </style>
+</head>
+<body>
+  <form method="POST" action="/addcollege">
+    <h2>Add College Details</h2>
+
+    <label>College Name:</label>
+    <input type="text" name="collegename" required>
+
+    <label>Course Offered:</label>
+    <input type="text" name="course" required>
+
+    <label>Available Seats:</label>
+    <input type="number" name="seats" required>
+
+    <input type="submit" value="Add College">
+  </form>
+</body>
+</html>
+//ADMINDASHBOARD.HTML
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Dashboard</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(to right, #f0f4f8, #e0f7fa);
+            margin: 0;
+            padding: 40px;
+            color: #333;
+        }
+
+        h2, h3 {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 20px;
+        }
+
+        p {
+            text-align: center;
+            font-size: 18px;
+            margin-bottom: 30px;
+            font-weight: 500;
+        }
+
+        a {
+            display: block;
+            text-align: center;
+            margin-bottom: 30px;
+            color: #007BFF;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background-color: #fff;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        th, td {
+            padding: 14px;
+            border: 1px solid #ddd;
+            text-align: center;
+            font-size: 14px;
+        }
+
+        th {
+            background-color: #e3f2fd;
+            font-weight: 600;
+        }
+
+        tr:nth-child(even) {
+            background-color: #f9f9f9;
+        }
+
+        tr:hover {
+            background-color: #f1f8e9;
+        }
+
+        @media (max-width: 768px) {
+            table, th, td {
+                font-size: 12px;
+                padding: 10px;
+            }
+
+            body {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h2>Welcome, Admin</h2>
+    <p>Total Registered Students: {{ count }}</p>
+    <a href="{{ url_for('admin_logout') }}">Logout</a>
+
+    <h3>Student List</h3>
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>DOB</th>
+                <th>District</th>
+                <th>State</th>
+                <th>10th Marks</th>
+                <th>12th Marks</th>
+                <th>Category</th>
+                <th>Course</th>
+                <th>Preference 1</th>
+                <th>Preference 2</th>
+                <th>Preference 3</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for student in students %}
+            <tr>
+                <td>{{ student[0] }}</td>
+                <td>{{ student[1] }}</td>
+                <td>{{ student[2] }}</td>
+                <td>{{ student[3] }}</td>
+                <td>{{ student[4] }}</td>
+                <td>{{ student[5] }}</td>
+                <td>{{ student[6] }}</td>
+                <td>{{ student[7] }}</td>
+                <td>{{ student[8] }}</td>
+                <td>{{ student[9] }}</td>
+                <td>{{ student[10] }}</td>
+                <td>{{ student[11] }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</body>
+</html>
+//ADMINLOGIN.HTML
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Admin Login</title>
+    <style>
+    body {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        background: linear-gradient(to right, #fceabb, #f8b500);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 100vh;
+        margin: 0;
+    }
+
+    form {
+        background-color: white;
+        padding: 40px 35px;
+        border-radius: 12px;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+        width: 100%;
+        max-width: 400px;
+    }
+
+    h2 {
+        text-align: center;
+        margin-bottom: 30px;
+        color: #333;
+    }
+
+    label {
+        font-weight: 600;
+        color: #444;
+        display: block;
+        margin-bottom: 6px;
+    }
+
+    input[type="text"],
+    input[type="password"] {
+        width: 100%;
+        padding: 10px 14px;
+        border: 1px solid #ccc;
+        border-radius: 8px;
+        font-size: 15px;
+        margin-bottom: 20px;
+        background-color: #f9f9f9;
+    }
+
+    button {
+        width: 100%;
+        padding: 12px;
+        border: none;
+        border-radius: 8px;
+        background-color: #ff9800;
+        color: white;
+        font-size: 16px;
+        cursor: pointer;
+        font-weight: bold;
+        transition: background-color 0.3s;
+    }
+
+    button:hover {
+        background-color: #e68a00;
+    }
+
+    p {
+        text-align: center;
+        color: red;
+        margin-top: 20px;
+        font-weight: 500;
+    }
+</style>
+
+</head>
+<body>
+    <h2>Admin Login</h2>
+    <form method="post">
+        <label>Username:</label><br>
+        <input type="text" name="username" required><br><br>
+        <label>Password:</label><br>
+        <input type="password" name="password" required><br><br>
+        <button type="submit">Login</button>
+    </form>
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}
+        <p style="color:red;">{{ messages[0] }}</p>
+      {% endif %}
+    {% endwith %}
+</body>
+</html>
+//REGISTER.HTML
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Student Registration</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+    <meta charset="UTF-8">
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(to right, #f0f8ff, #ffffff);
+            padding: 50px 20px;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+        }
+
+        form {
+            background-color: #ffffff;
+            padding: 30px 40px;
+            border-radius: 12px;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 600px;
+        }
+
+        h2 {
+            text-align: center;
+            color: #2c3e50;
+            margin-bottom: 30px;
+        }
+
+        label {
+            font-weight: bold;
+            color: #333;
+            display: block;
+            margin-top: 15px;
+            margin-bottom: 5px;
+        }
+
+        input[type="text"],
+        input[type="number"],
+        input[type="email"],
+        input[type="tel"],
+        input[type="date"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+
+        input[type="submit"] {
+            margin-top: 25px;
+            width: 100%;
+            padding: 12px;
+            background-color: #3498db;
+            color: white;
+            font-size: 18px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+
+        input[type="submit"]:hover {
+            background-color: #2c80b4;
+        }
+
+        a {
+            display: block;
+            text-align: center;
+            margin-top: 20px;
+            text-decoration: none;
+            color: #3498db;
+            font-weight: bold;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <form method="post" action="{{ url_for('register') }}">
+        <h2>Student Registration</h2>
+
+        <label>Name:</label>
+        <input type="text" name="name" required>
+
+        <label>Rank:</label>
+        <input type="number" name="rank" required>
+
+        <label>Course:</label>
+        <input type="text" name="course" required>
+
+        <label>Preference 1:</label>
+        <input type="text" name="preference1" required>
+
+        <label>Preference 2:</label>
+        <input type="text" name="preference2">
+
+        <label>Preference 3:</label>
+        <input type="text" name="preference3">
+
+        <label>Email:</label>
+        <input type="email" name="email" required>
+
+        <label>Phone (+CountryCodeNumber):</label>
+        <input type="tel" name="phone" required placeholder="+911234567890">
+
+        <label>Marks Obtained:</label>
+        <input type="number" name="marks" min="0" required>
+
+        <label>Total Marks:</label>
+        <input type="number" name="total_marks" min="1" required>
+
+        <label>Percentage:</label>
+        <input type="number" step="0.01" name="percentage" min="0" max="100" required>
+
+        <label>Cutoff:</label>
+        <input type="number" step="0.01" name="cutoff" min="0" required>
+
+        <label>Aadhaar Card Number:</label>
+        <input type="text" name="aadhaar" pattern="\d{12}" placeholder="12-digit Aadhaar" required>
+
+        <label>PAN Card Number:</label>
+        <input type="text" name="pan" pattern="[A-Z]{5}[0-9]{4}[A-Z]" placeholder="ABCDE1234F" required>
+
+        <label>Date of Birth:</label>
+        <input type="date" name="dob" required>
+
+        <label>District:</label>
+        <input type="text" name="district" required>
+
+        <input type="submit" value="Register">
+    </form>
+</body>
+</html>
+//STUDENT_REGISTER.HTML
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Student Registration</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(to right, #e0f7fa, #ffffff);
+      padding: 40px 10px;
+      display: flex;
+      justify-content: center;
+    }
+
+    form {
+      background-color: #ffffff;
+      padding: 30px 40px;
+      border-radius: 12px;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+      width: 100%;
+      max-width: 700px;
+    }
+
+    h2 {
+      text-align: center;
+      color: #006064;
+      margin-bottom: 30px;
+    }
+
+    label {
+      font-weight: 600;
+      display: block;
+      margin-top: 15px;
+      margin-bottom: 6px;
+      color: #333;
+    }
+
+    input[type="text"],
+    input[type="date"],
+    input[type="number"],
+    input[type="email"],
+    input[type="tel"],
+    select {
+      width: 100%;
+      padding: 10px;
+      font-size: 16px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      box-sizing: border-box;
+      margin-bottom: 10px;
+    }
+
+    input[type="file"] {
+      padding: 8px 10px;
+      font-size: 14px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      background: #fafafa;
+    }
+
+    button[type="submit"] {
+      width: 100%;
+      padding: 12px;
+      background-color: #00796b;
+      color: white;
+      font-size: 18px;
+      border: none;
+      border-radius: 8px;
+      margin-top: 20px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+
+    button[type="submit"]:hover {
+      background-color: #004d40;
+    }
+
+    @media (max-width: 600px) {
+      form {
+        padding: 20px;
+      }
+      h2 {
+        font-size: 22px;
+      }
+    }
+  </style>
+
+  <script>
+    function updatePreferences() {
+      const selects = [
+        document.querySelector("select[name='preference1']"),
+        document.querySelector("select[name='preference2']"),
+        document.querySelector("select[name='preference3']")
+      ];
+      const selectedValues = selects.map(select => select.value);
+      selects.forEach((select, index) => {
+        const currentValue = select.value;
+        Array.from(select.options).forEach(option => {
+          option.disabled = false;
+          if (option.value && selectedValues.includes(option.value) && option.value !== currentValue) {
+            option.disabled = true;
+          }
+        });
+      });
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      const selects = document.querySelectorAll("select[name^='preference']");
+      selects.forEach(select => {
+        select.addEventListener("change", () => updatePreferences(select));
+      });
+      updatePreferences();
+    });
+  </script>
+</head>
+<body>
+  <form method="POST" action="{{ url_for('register_student') }}">
+
+
+    <h2>Student Registration</h2>
+
+  
+
+    <label>Name:</label>
+    <input type="text" name="name" required>
+
+    <label>Date of Birth:</label>
+    <input type="date" name="dob" required>
+
+    <label>District:</label>
+    <input type="text" name="district" required>
+
+    <label>State:</label>
+    <input type="text" name="state" required>
+
+    <label>10th Marks (out of 500):</label>
+    <input type="number" name="marks_10th" max="500" required>
+
+    <label>Upload 10th Marksheet:</label>
+    <input type="file" name="marksheet_10th" accept=".pdf,.jpg,.png" required>
+
+    <label>12th Marks (out of 600):</label>
+    <input type="number" name="marks_12th" max="600" required>
+
+    <label>Upload 12th Marksheet:</label>
+    <input type="file" name="marksheet_12th" accept=".pdf,.jpg,.png" required>
+
+    <label>Upload Aadhar Card:</label>
+    <input type="file" name="aadhar" accept=".pdf,.jpg,.png" required>
+
+    <label>Category:</label>
+    <select name="category" required>
+      <option value="">-- Select Category --</option>
+      <option value="General">General</option>
+      <option value="BC">BC</option>
+      <option value="MBC">MBC</option>
+      <option value="SC">SC</option>
+      <option value="ST">ST</option>
+      <option value="Others">Others</option>
+    </select>
+
+    <label>Course:</label>
+    <select name="course" required>
+      <option value="">-- Select Course --</option>
+      <option value="MBBS">MBBS</option>
+      <option value="BDS">BDS</option>
+      <option value="BAMS">BAMS</option>
+      <option value="BHMS">BHMS</option>
+      <option value="B.Sc Computer Science">B.Sc Computer Science</option>
+      <option value="B.Sc Mathematics">B.Sc Mathematics</option>
+      <option value="B.A English">B.A English</option>
+      <option value="B.Com">B.Com</option>
+      <option value="BA LLB">BA LLB</option>
+      <option value="BBA LLB">BBA LLB</option>
+      <option value="B.Com LLB">B.Com LLB</option>
+      <option value="B.E Computer Science">B.E Computer Science</option>
+      <option value="B.E Mechanical">B.E Mechanical</option>
+      <option value="B.E Civil">B.E Civil</option>
+      <option value="B.Tech IT">B.Tech IT</option>
+    </select>
+
+    <label>Preference 1:</label>
+    <select name="preference1" required>
+      <option value="">-- Select College --</option>
+      <option value="Govt College of Engineering">Govt College of Engineering</option>
+      <option value="Anna University">Anna University</option>
+      <option value="PSG College">PSG College</option>
+      <option value="SRM University">SRM University</option>
+      <option value="VIT Vellore">VIT Vellore</option>
+      <option value="SASTRA University">SASTRA University</option>
+      <option value="Kongu Engineering">Kongu Engineering</option>
+      <option value="Thiagarajar College">Thiagarajar College</option>
+      <option value="Coimbatore Institute of Tech">Coimbatore Institute of Tech</option>
+      <option value="Vel Tech University">Vel Tech University</option>
+      <option value="Bannari Amman Institute">Bannari Amman Institute</option>
+    </select>
+
+    <label>Preference 2:</label>
+    <select name="preference2" required>
+      <option value="">-- Select College --</option>
+      <!-- same options as above -->
+      <option value="Govt College of Engineering">Govt College of Engineering</option>
+      <option value="Anna University">Anna University</option>
+      <option value="PSG College">PSG College</option>
+      <option value="SRM University">SRM University</option>
+      <option value="VIT Vellore">VIT Vellore</option>
+      <option value="SASTRA University">SASTRA University</option>
+      <option value="Kongu Engineering">Kongu Engineering</option>
+      <option value="Thiagarajar College">Thiagarajar College</option>
+      <option value="Coimbatore Institute of Tech">Coimbatore Institute of Tech</option>
+      <option value="Vel Tech University">Vel Tech University</option>
+      <option value="Bannari Amman Institute">Bannari Amman Institute</option>
+    </select>
+
+    <label>Preference 3:</label>
+    <select name="preference3" required>
+      <option value="">-- Select College --</option>
+      <!-- same options again -->
+      <option value="Govt College of Engineering">Govt College of Engineering</option>
+      <option value="Anna University">Anna University</option>
+      <option value="PSG College">PSG College</option>
+      <option value="SRM University">SRM University</option>
+      <option value="VIT Vellore">VIT Vellore</option>
+      <option value="SASTRA University">SASTRA University</option>
+      <option value="Kongu Engineering">Kongu Engineering</option>
+      <option value="Thiagarajar College">Thiagarajar College</option>
+      <option value="Coimbatore Institute of Tech">Coimbatore Institute of Tech</option>
+      <option value="Vel Tech University">Vel Tech University</option>
+      <option value="Bannari Amman Institute">Bannari Amman Institute</option>
+    </select>
+
+    <button type="submit">Submit</button>
+  </form>
+</body>
+</html>
+//STUDENTLOGIN.HTML
+<!-- templates/studentlogin.html -->
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Student Login</title>
+</head>
+<body>
+    <h2>Student Login</h2>
+    <form method="POST" action="{{ url_for('studentlogin') }}">
+        <label>Email:</label><br>
+        <input type="email" name="email" required><br><br>
+        <label>Password:</label><br>
+        <input type="password" name="password"><br><br> <!-- Optional: ignore password in logic if not used -->
+        <button type="submit">Login</button>
+    </form>
+    {% with messages = get_flashed_messages() %}
+      {% if messages %}
+        <ul>
+          {% for message in messages %}
+            <li>{{ message }}</li>
+          {% endfor %}
+        </ul>
+      {% endif %}
+    {% endwith %}
+</body>
+</html>
+
