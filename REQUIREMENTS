@@ -1,0 +1,5 @@
+Flask==3.1.0
+Werkzeug>=3.1
+flask-mail==0.9.1
+twilio==7.16.0
+
