@@ -1,0 +1,282 @@
+from flask import Flask, render_template, request, redirect, url_for, send_from_directory, flash, session
+import sqlite3
+import os
+from werkzeug.utils import secure_filename
+
+app = Flask(__name__)
+app.secret_key = 'secret123'
+
+UPLOAD_FOLDER = 'uploads'
+app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+
+DB_NAME = 'collegecounselling.db'
+
+if not os.path.exists(UPLOAD_FOLDER):
+    os.makedirs(UPLOAD_FOLDER)
+
+# ✅ DB Initialization
+conn = sqlite3.connect(DB_NAME)
+c = conn.cursor()
+
+# Create necessary tables
+c.execute('''CREATE TABLE IF NOT EXISTS students (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT,
+    rank INTEGER,
+    course TEXT,
+    preference1 TEXT,
+    preference2 TEXT,
+    preference3 TEXT,
+    email TEXT,
+    phone TEXT,
+    marks INTEGER,
+    total_marks INTEGER,
+    percentage REAL,
+    cutoff REAL,
+    aadhaar TEXT,
+    pan TEXT,
+    dob TEXT,
+    district TEXT
+)''')
+
+c.execute('''CREATE TABLE IF NOT EXISTS colleges (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    collegename TEXT,
+    location TEXT,
+    cutoff REAL,
+    total_seats INTEGER,
+    filled_seats INTEGER DEFAULT 0
+)''')
+
+c.execute('''CREATE TABLE IF NOT EXISTS allotments (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    student_id INTEGER,
+    college_id INTEGER,
+    FOREIGN KEY(student_id) REFERENCES students(id),
+    FOREIGN KEY(college_id) REFERENCES colleges(id)
+)''')
+
+conn.commit()
+conn.close()
+@app.route('/')
+def index():
+    student_id = session.get('student_id')
+
+    # 👇 Optional: debug print to check what's happening
+    print("Student ID from session:", student_id)
+
+    return render_template('index.html', student_id=student_id)
+@app.route('/studentlogin', methods=['GET', 'POST'])
+def studentlogin():
+    if request.method == 'POST':
+        email = request.form['email']
+        password = request.form['password']  # Optional: only if you handle passwords
+
+        conn = sqlite3.connect(DB_NAME)
+        c = conn.cursor()
+        c.execute('SELECT id FROM students WHERE email=?', (email,))
+        row = c.fetchone()
+        conn.close()
+
+        if row:
+            session['student_id'] = row[0]  # ✅ Save ID in session
+            return redirect(url_for('index'))
+        else:
+            flash('Invalid login. Please try again.')
+            return redirect(url_for('studentlogin'))
+    else:
+        return render_template('studentlogin.html')
+
+# @app.route('/')
+# def index():
+#     student_id = session.get('student_id')  # 👈 or fetch from database
+#     return render_template('index.html', student_id=student_id)
+
+# @app.route('/')
+# def index():
+#     return render_template('index.html')
+
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    if request.method == 'POST':
+        name = request.form['name']
+        rank = request.form['rank']
+        course = request.form['course']
+        preference1 = request.form['preference1']
+        preference2 = request.form['preference2']
+        preference3 = request.form['preference3']
+        email = request.form['email']
+        phone = request.form['phone']
+        marks = request.form['marks']
+        total_marks = request.form['total_marks']
+        percentage = request.form['percentage']
+        cutoff = request.form['cutoff']
+        aadhaar = request.form['aadhaar']
+        pan = request.form['pan']
+        dob = request.form['dob']
+        district = request.form['district']
+
+        conn = sqlite3.connect(DB_NAME)
+        c = conn.cursor()
+        c.execute('''INSERT INTO students (name, rank, course, preference1, preference2, preference3,
+                    email, phone, marks, total_marks, percentage, cutoff,
+                    aadhaar, pan, dob, district)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)''',
+                  (name, rank, course, preference1, preference2, preference3,
+                   email, phone, marks, total_marks, percentage, cutoff,
+                   aadhaar, pan, dob, district))
+        conn.commit()
+        conn.close()
+
+        return redirect(url_for('student_list'))
+
+    return render_template('register.html')
+
+@app.route('/studentlist')
+def student_list():
+    conn = sqlite3.connect(DB_NAME)
+    c = conn.cursor()
+    c.execute("SELECT * FROM students")
+    students = c.fetchall()
+    conn.close()
+    return render_template('studentlist.html', students=students)
+
+@app.route('/viewstudents')
+def view_students():
+    conn = sqlite3.connect(DB_NAME)
+    c = conn.cursor()
+    c.execute("SELECT * FROM students")
+    students = c.fetchall()
+    conn.close()
+    return render_template('viewstudents.html', students=students)
+
+@app.route('/uploads/<filename>')
+def uploaded_file(filename):
+    return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
+@app.route('/addcollege', methods=['GET', 'POST'])
+def add_college():
+    if request.method == 'POST':
+        collegename = request.form['collegename']
+        course = request.form['course']
+        seats = request.form['seats']
+
+        session['college_data'] = {
+            'collegename': collegename,
+            'course': course,
+            'seats': seats
+        }
+
+        # ✅ Redirect to student registration page
+        return redirect(url_for('register_student'))
+
+    return render_template('addcolleges.html')
+
+@app.route('/adminlogin', methods=['GET', 'POST'])
+def adminlogin():
+    if request.method == 'POST':
+        if request.form['username'] == 'admin' and request.form['password'] == 'admin123':
+            session['admin'] = True
+            return redirect(url_for('admindashboard'))
+        else:
+            flash('Invalid login')
+    return render_template('adminlogin.html')
+
+@app.route('/admin_logout')
+def admin_logout():
+    session.clear()
+    return redirect(url_for('adminlogin'))
+
+@app.route('/admindashboard')
+def admindashboard():
+    if 'admin' not in session:
+        return redirect(url_for('adminlogin'))
+
+    conn = sqlite3.connect(DB_NAME)
+    c = conn.cursor()
+    c.execute("SELECT * FROM students")
+    students = c.fetchall()
+    count = len(students)
+    conn.close()
+
+    return render_template('admindashboard.html', students=students, count=count)
+
+@app.route('/register_student', methods=['GET', 'POST'])
+def register_student():
+    if request.method == 'POST':
+        name = request.form['name']
+        dob = request.form['dob']
+        district = request.form['district']
+        state = request.form['state']
+        marks_10th = int(request.form['marks_10th'])
+        marks_12th = int(request.form['marks_12th'])
+        category = request.form['category']
+        course = request.form['course']
+        preference1 = request.form['preference1']
+        preference2 = request.form['preference2']
+        preference3 = request.form['preference3']
+
+        # Save data to database
+        conn = sqlite3.connect('students.db')
+        c = conn.cursor()
+        c.execute('''
+            INSERT INTO students (name, dob, district, state, marks_10th, marks_12th, category, course, preference1, preference2, preference3)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ''', (name, dob, district, state, marks_10th, marks_12th, category, course, preference1, preference2, preference3))
+        student_id = c.lastrowid
+        conn.commit()
+        conn.close()
+
+        # Redirect to allotment result page
+        return redirect(url_for('allotment', student_id=student_id))
+
+    # If GET method, render the registration form
+    return render_template('student_register.html')
+@app.route('/allotment/<int:student_id>')
+def allotment(student_id):
+    conn = sqlite3.connect('students.db')
+    c = conn.cursor()
+    c.execute('SELECT * FROM students WHERE id=?', (student_id,))
+    student = c.fetchone()
+    conn.close()
+
+    if not student:
+        return "Student not found", 404
+
+    # Sample college cutoffs
+    college_cutoffs = {
+        "Govt College of Engineering": 550,
+        "Anna University": 530,
+        "PSG College": 500,
+        "SRM University": 480,
+        "VIT Vellore": 460,
+        "SASTRA University": 450,
+        "Kongu Engineering": 440,
+        "Thiagarajar College": 430,
+        "Coimbatore Institute of Tech": 420,
+        "Vel Tech University": 410,
+        "Bannari Amman Institute": 400
+    }
+
+    marks_12th = student[5]  # 12th marks
+    preferences = [student[8], student[9], student[10]]  # preference1, 2, 3
+
+    allotted_college = None
+    for pref in preferences:
+        if marks_12th >= college_cutoffs.get(pref, 1000):
+            allotted_college = pref
+            break
+
+    fallback_colleges = []
+    if not allotted_college:
+        for name, cutoff in college_cutoffs.items():
+            if marks_12th >= cutoff:
+                fallback_colleges.append({'name': name, 'cutoff': cutoff})
+
+    return render_template(
+        'allotedcounseling.html',
+        student=student,
+        allotted_college=allotted_college,
+        fallback_colleges=fallback_colleges
+    )
+if __name__ == '__main__':
+    app.run(debug=True)
